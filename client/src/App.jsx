@@ -11,7 +11,6 @@ import Header from "./Component_Stack/Sections/Header";
 import AddVechicle from "./Component_Stack/Pages/AddVehicle";
 import YourVehicles from "./Component_Stack/Pages/YourVehicles";
 import MyCart from "./Component_Stack/Pages/MyCart.jsx";
-import {AuthenticationContextProvider} from "./Context/Authentication.jsx";
 
 import { CartProvider } from './components/ContextReducer';
 import { GoogleOAuthProvider } from '@react-oauth/google';

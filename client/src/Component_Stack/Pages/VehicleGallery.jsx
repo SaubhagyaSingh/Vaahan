@@ -1,52 +1,66 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { Card, CardContent, TextField, MenuItem, Select, Button } from '@mui/material';
-import { MapPin } from 'lucide-react';
-import VehicleCard from '../Cards/VehicleCard';
-import {vehicle} from '../../assets/Fallback_Data/vechicle';
+import React, { useEffect } from "react";
+import PropTypes from "prop-types";
+import {
+  Card,
+  CardContent,
+  TextField,
+  MenuItem,
+  Select,
+  Button,
+} from "@mui/material";
+import { MapPin } from "lucide-react";
+import VehicleCard from "../Cards/VehicleCard";
+import { vehicle } from "../../assets/Fallback_Data/vechicle";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  setVehicles,
+  setSearchTerm,
+  setSelectedType,
+  setLocation,
+  setIsLoading,
+} from "../../redux/vehicleSlice";
 
 const fetchVehicles = async () => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/vehicles`);
+    const response = await fetch(
+      `${import.meta.env.VITE_APP_API_URL}/vehicles`
+    );
     if (!response.ok) {
-      throw new Error('Network response was not ok');
+      throw new Error("Network response was not ok");
     }
     const data = await response.json();
-    return data.vehicle; 
+    return data.vehicle;
   } catch (error) {
-    console.error('Error fetching vehicles:', error);
+    console.error("Error fetching vehicles:", error);
     return [];
   }
 };
 
 export default function VehicleGallery() {
-  // console.log(vehicle);
-  const [vehicles, setVehicles] = useState(vehicle);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState('All');
-  const [location, setLocation] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { vehicles, searchTerm, selectedType, location, isLoading } =
+    useSelector((state) => state.vehicle);
 
   useEffect(() => {
-    fetchVehicles().then((data) => {
-      setVehicles(data);
-      setIsLoading(false);
-    });
-  }, []);
+    const fetchData = async () => {
+      dispatch(setIsLoading(true));
+      const data = await fetchVehicles();
+      dispatch(setVehicles(data));
+    };
+    fetchData();
+  }, [dispatch]);
 
   const handleFetchLocation = () => {
-    alert('Fetching live location...');
-    
+    alert("Fetching live location...");
   };
 
   const filteredVehicles = vehicles.filter(
     (vehicle) =>
-      (selectedType === 'All' || vehicle.categoryName === selectedType) &&
+      (selectedType === "All" || vehicle.categoryName === selectedType) &&
       vehicle.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (location === '' || vehicle.pincode.includes(location))
+      (location === "" || vehicle.pincode.includes(location))
   );
 
-  
   return (
     <div className="min-h-screen bg-transparent dark:bg-gray-900 text-white dark:text-gray-100 p-8 mt-24">
       <h1 className="text-4xl font-bold mb-8">Vehicle Gallery</h1>
@@ -55,7 +69,10 @@ export default function VehicleGallery() {
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4 mb-4">
             <div className="flex-1">
-              <label htmlFor="search" className="block text-sm font-medium mb-1">
+              <label
+                htmlFor="search"
+                className="block text-sm font-medium mb-1"
+              >
                 Search Vehicles
               </label>
               <TextField
@@ -63,7 +80,7 @@ export default function VehicleGallery() {
                 type="text"
                 placeholder="Search vehicles..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => dispatch(setSearchTerm(e.target.value))}
                 fullWidth
               />
             </div>
@@ -74,9 +91,9 @@ export default function VehicleGallery() {
               <Select
                 id="type"
                 value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
+                onChange={(e) => dispatch(setSelectedType(e.target.value))}
                 fullWidth
-                sx={{ bgcolor: 'background.paper' }}
+                sx={{ bgcolor: "background.paper" }}
               >
                 <MenuItem value="All">All Types</MenuItem>
                 <MenuItem value="Electric">Electric</MenuItem>
@@ -89,7 +106,10 @@ export default function VehicleGallery() {
           </div>
           <div className="flex flex-col sm:flex-row gap-4 items-end">
             <div className="flex-1">
-              <label htmlFor="location" className="block text-sm font-medium mb-1">
+              <label
+                htmlFor="location"
+                className="block text-sm font-medium mb-1"
+              >
                 Location (Pin Code)
               </label>
               <TextField
@@ -97,11 +117,15 @@ export default function VehicleGallery() {
                 type="text"
                 placeholder="Enter pin code..."
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onChange={(e) => dispatch(setLocation(e.target.value))}
                 fullWidth
               />
             </div>
-            <Button onClick={handleFetchLocation} variant="contained" color="primary">
+            <Button
+              onClick={handleFetchLocation}
+              variant="contained"
+              color="primary"
+            >
               <MapPin className="w-4 h-4 mr-2" />
               Get Current Location
             </Button>
@@ -115,7 +139,9 @@ export default function VehicleGallery() {
         <>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Available Vehicles</h2>
-            <div className="text-sm text-gray-500">{filteredVehicles.length} vehicles found</div>
+            <div className="text-sm text-gray-500">
+              {filteredVehicles.length} vehicles found
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredVehicles.map((vehicle) => (
@@ -128,11 +154,14 @@ export default function VehicleGallery() {
                 ownerPhone={vehicle.ownerPhone}
                 halfDayPrice={vehicle.halfDayPrice}
                 fullDayPrice={vehicle.fullDayPrice}
+                vdata={vehicle}
               />
             ))}
           </div>
           {filteredVehicles.length === 0 && (
-            <p className="text-center text-gray-400 mt-8">No vehicles found matching your criteria.</p>
+            <p className="text-center text-gray-400 mt-8">
+              No vehicles found matching your criteria.
+            </p>
           )}
         </>
       )}
@@ -156,3 +185,4 @@ VehicleGallery.propTypes = {
     type: PropTypes.string,
   }),
 };
+  
