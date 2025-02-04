@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   removeFromCart,
@@ -7,10 +7,12 @@ import {
 } from "../../redux/cartSlice";
 import { Trash } from "lucide-react";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 export default function MyCart() {
   const cart = useSelector((state) => state.cart.cart);
   const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
 
   // Remove item from cart
   const handleRemove = (id) => {
@@ -32,6 +34,44 @@ export default function MyCart() {
 
   // Calculate total price
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+  // Handle Checkout
+  const handleCheckout = async () => {
+    if (cart.length === 0) {
+      toast.error("Your cart is empty.");
+      return;
+    }
+
+    setLoading(true);
+    const newOrders = cart.map((item) => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      qty: item.qty,
+      img: item.img,
+      span: item.span,
+    }));
+
+    try {
+      const response = await axios.post("http://localhost:5000/orders", {
+        new_orders: newOrders,
+        email: "user@example.com", // Replace with the actual user email
+      });
+
+      if (response.data.success) {
+        toast.success("Order placed successfully!");
+        // Optionally clear the cart after successful order
+        dispatch(clearCart());
+      } else {
+        toast.error("Failed to place order. Please try again.");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("An error occurred while processing the order.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-white text-black flex flex-col">
@@ -113,10 +153,11 @@ export default function MyCart() {
             </button>
             {/* Checkout Button */}
             <button
-              onClick={() => alert("Proceed to Checkout")}
+              onClick={handleCheckout}
+              disabled={loading}
               className="px-6 py-3 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition"
             >
-              Checkout
+              {loading ? "Processing..." : "Checkout"}
             </button>
           </div>
         </div>
